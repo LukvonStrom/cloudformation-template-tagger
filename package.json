@@ -1,0 +1,23 @@
+{
+  "name": "cloudformation-template-tagger",
+  "version": "1.0.0",
+  "description": "Tag Cloudformation ressources with specific tags",
+  "main": "src/index.js",
+  "dependencies": {
+    "marked": "^1.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LukvonStrom/cloudformation-template-tagger.git"
+  },
+  "author": "Lukas Fruntke",
+  "license": "CC-BY-SA-4.0",
+  "bugs": {
+    "url": "https://github.com/LukvonStrom/cloudformation-template-tagger/issues"
+  },
+  "homepage": "https://github.com/LukvonStrom/cloudformation-template-tagger#readme"
+}

@@ -1,0 +1,14 @@
+[
+    "Ec2TagFilters",
+    "Ec2TagSet",
+    "OnPremisesInstanceTagFilters",
+    "OnPremisesTagSet",
+    
+    "ImageTagMutability",
+    "EnableECSManagedTags",
+    "PropagateTags",
+    "ExcludeResourceTags",
+    "UserAttributesForFindings",
+    "TagUpdateOnProvisionedProduct",
+    "TagOptionId"
+]
