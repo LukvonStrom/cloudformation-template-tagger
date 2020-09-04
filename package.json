@@ -1,23 +1,51 @@
 {
   "name": "cloudformation-template-tagger",
-  "version": "1.0.0",
   "description": "Tag Cloudformation ressources with specific tags",
-  "main": "src/index.js",
-  "dependencies": {
-    "marked": "^1.1.1"
+  "version": "0.0.1",
+  "author": "Lukas Fruntke",
+  "license": "CC-BY-SA-4.0",
+  "bin": {
+    "tagcf": "./bin/run"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "dependencies": {
+    "@oclif/command": "^1.8.0",
+    "@oclif/config": "^1.17.0",
+    "@oclif/plugin-help": "^3.2.0",
+    "chalk": "^4.1.0",
+    "inquirer": "^7.3.3",
+    "marked": "^1.1.1",
+    "ora": "^5.0.0"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.22.2",
+    "rimraf": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/src"
+  ],
+  "keywords": [
+    "oclif"
+  ],
+  "main": "src/cli.js",
+  "oclif": {
+    "bin": "tagcf"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LukvonStrom/cloudformation-template-tagger.git"
   },
-  "author": "Lukas Fruntke",
-  "license": "CC-BY-SA-4.0",
   "bugs": {
     "url": "https://github.com/LukvonStrom/cloudformation-template-tagger/issues"
   },
-  "homepage": "https://github.com/LukvonStrom/cloudformation-template-tagger#readme"
+  "homepage": "https://github.com/LukvonStrom/cloudformation-template-tagger#readme",
+  "scripts": {
+    "prepack": "oclif-dev readme",
+    "test": "echo NO TESTS",
+    "version": "oclif-dev readme && git add README.md",
+    "start": "node ./bin/run"
+  }
 }
