@@ -6,7 +6,8 @@ const path = require("path")
 const chalk = require("chalk")
 const ora = require("ora");
 
-const { loadTaggableResources, patchCloudformation } = require('./api')
+const { loadTaggableResources, patchCloudformation, readJSONFile } = require('./api')
+
 
 
 class CliCommand extends Command {
@@ -27,7 +28,7 @@ class CliCommand extends Command {
       type: 'checkbox',
       message: 'Select the cloudformation templates that shall be tagged',
       name: 'cftemplates',
-      choices: currentFiles.filter(candidate => candidate.isFile() && (candidate.name.includes(".json") || candidate.name.includes(".yml") || candidate.name.includes(".yaml"))).map(candidate => candidate.name),
+      choices: currentFiles.filter(candidate => candidate.isFile() && candidate.name.includes(".json")/*candidate.isFile() && (candidate.name.includes(".json") || candidate.name.includes(".yml") || candidate.name.includes(".yaml"))*/).map(candidate => candidate.name),
       validate: async function (answer) {
         if (answer.length < 1) {
           return chalk`{red.bold You must choose at least one template.}`;
@@ -36,7 +37,7 @@ class CliCommand extends Command {
         let invalidFiles = [];
         for (let template of answer) {
           try {
-            let data = JSON.parse(await (await fs.readFile(path.join(process.cwd(), template))).toString())
+            let data = await readJSONFile(path.join(process.cwd(), template))
             return data.hasOwnProperty("Resources");
           } catch (e) {
             invalidFiles.push(template)
@@ -67,8 +68,7 @@ class CliCommand extends Command {
         }
 
         try {
-          let file = await fs.readFile(path.join(process.cwd(), answer[0]))
-          let data = JSON.parse(await file.toString())
+          let data = await readJSONFile(path.join(process.cwd(), answer[0]))
           return data.hasOwnProperty("Tags");
         } catch (e) {
           return chalk`{red.bold ${answer} is not a valid tag file.}`
@@ -84,12 +84,11 @@ class CliCommand extends Command {
 
 
     try {
-      blocklist = JSON.parse(await (await fs.readFile(path.join(__dirname, "blocklist.json"))).toString());
+      blocklist = await readJSONFile(path.join(__dirname, "blocklist.json"));
       documentation = await loadTaggableResources(blocklist);
-      cfSpinner.succeed();
+      cfSpinner.succeed(chalk`{bold.green Loaded taggable CloudFormation ressources}`);
     } catch (e) {
-      cfSpinner.fail();
-      console.error(e)
+      cfSpinner.fail(chalk`{bold.red ${e.message}}`);
       this.error(e)
     }
 
@@ -99,52 +98,47 @@ class CliCommand extends Command {
 
 
     if (tagFile && !cfFile) {
-      this.log("Tag Flag present")
       this.tags = tagFile;
       let { cftemplates } = await inquirer.prompt([cfPrompt])
       this.targetTemplates = cftemplates;
     } else if (!tagFile && cfFile) {
-      this.log("cf Flag present")
       this.targetTemplates = cfFile;
       let { tagFile } = await inquirer.prompt([tagPrompt])
       this.tags = tagFile
     } else {
-      this.log(chalk`{bold no flags present}`)
       let { cftemplates, tagFile } = await inquirer.prompt([cfPrompt, tagPrompt])
 
       this.targetTemplates = cftemplates
       this.tags = tagFile
     }
 
-    // let tagSpinner = ora(chalk`{bold Adding Tags}`);
-    // tagSpinner.start();
+
+    let tagSpinner = ora(chalk`{bold Adding Tags}`);
+    tagSpinner.start();
 
     try {
 
 
-      console.log("HI", this.tags, this.targetTemplates)
+      this.tags = await readJSONFile(path.join(process.cwd(), this.tags[0]), true)
+      this.tags = this.tags.Tags;
+
+      let template = this.targetTemplates[0]
+      let { result, base } = await patchCloudformation(documentation, path.join(process.cwd(), template), this.tags)
+      let file = template.split('.');
+      let extensionLessFile = file.slice(0, -1).join('.')
 
 
-      let tags = JSON.parse(await (await fs.readFile(path.join(process.cwd(), this.tags[0]))).toString());
+
+      await fs.writeFile(path.join(process.cwd(), `${extensionLessFile}-improved.${file[file.length - 1]}`), JSON.stringify(result, null, 4))
+
+      // await fs.writeFile('summary.json', JSON.stringify(documentation, null, 4))
 
 
-      for (let template of this.targetTemplates) {
-        let { result, base } = await patchCloudformation(documentation, path.join(process.cwd(), template), tags)
-        let file = template.split('.');
-        let extensionLessFile = file.slice(0, -1).join('.')
-        console.log("HI")
-        console.log(file, extensionLessFile, result)
-        await fs.writeFile(path.join(process.cwd(), `${extensionLessFile}-base.${file[file.length - 1]}`), JSON.stringify(base, null, 4))
-        await fs.writeFile(path.join(process.cwd(), template), JSON.stringify(result, null, 4))
+      tagSpinner.succeed(chalk`{bold.green Wrote ${extensionLessFile}-improved.${file[file.length - 1]} with the tagged ressources}`);
 
-        // await fs.writeFile('summary.json', JSON.stringify(documentation, null, 4))
-      }
-
-      // tagSpinner.succeed();
     } catch (e) {
-      console.error(e)
 
-      // tagSpinner.fail();
+      tagSpinner.fail(chalk`{bold.red ${e.message}}`);
       this.error(e)
     }
 
